@@ -72,29 +72,6 @@ try {
 }
 console.log("🚀 ~ changelog:", changelog);
 
-// Add author information to each changelog item
-try {
-  // Get commits along with author info
-  const commits = execSync(
-    `git log --format='%s - %an' --no-merges --since="${currentVersion}"`,
-    { encoding: 'utf-8' }
-  ).trim().split('\n');
-
-  // Prepare the changelog entries
-  let changelogWithAuthors = '';
-  commits.forEach((commit) => {
-    // Format: - Commit message - author (Author Name)
-    changelogWithAuthors += `- ${commit.trim()} \n`;
-  });
-
-  // Use the new formatted changelog with authors
-  changelog = changelogWithAuthors + changelog;
-} catch (err) {
-  console.error("❌ Error extracting commits with authors:", err.message);
-  process.exit(1);
-}
-
-
 // Push tag
 const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
 execSync(`git tag -a ${tagName} -m "${tagMessage}"`, { stdio: "inherit" });

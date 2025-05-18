@@ -25,7 +25,7 @@
   "scripts": {
     "prepare": "husky",
     "cz": "git-cz",
-    "get-version": "node getVersion.js"
+    "get-version": "node getVersion.js stable"
   },
   "keywords": [],
   "author": "",
