@@ -1,6 +1,7 @@
 const semver = require("semver");
 const path = require("path");
 const fs = require("fs");
+const { execSync } = require('child_process');
 // Read package.json file
 const packageJson = JSON.parse(
   fs.readFileSync(path.join(__dirname, "package.json"), "utf8")
@@ -54,5 +55,14 @@ if (newVersion) {
     "utf8"
   );
   console.log("🚀 ~ newVersion:", newVersion);
-  return newVersion;
+  // Commit version bump
+  execSync(`git add package.json`);
+  execSync(`git commit -m "chore(release): v${newVersion}"`);
+  execSync(`git tag v${newVersion}`);
+  execSync(`git push && git push --tags`);
+
+  // Publish to npm with tag
+  execSync(`npm publish --tag ${tag}`, { stdio: "inherit" });
+
+  console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
 }
