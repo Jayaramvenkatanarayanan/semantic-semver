@@ -6,7 +6,7 @@ const { execSync } = require('child_process');
 const packageJson = JSON.parse(
   fs.readFileSync(path.join(__dirname, "package.json"), "utf8")
 );
-
+const currentVersion = packageJson.version
 const releaseType = ["stable", "minor"].includes(
   (process.argv[2] || "").trim().toLowerCase()
 )
@@ -45,45 +45,47 @@ if (releaseType === "beta") {
     );
   }
 }
-//re-write
-if (newVersion) {
-const tag = process.argv[3] || 'latest'; // npm dist-tag
+
+if (!newVersion) {
+  console.error('Invalid semver bump:', releaseType);
+  process.exit(1);
+}
+
+console.log(`📦 Bumped version: ${packageJson.version} → ${newVersion}`);
+
   packageJson.version = newVersion;
   fs.writeFileSync(
     path.join(__dirname, "package.json"),
     JSON.stringify(packageJson, null, 2) + "\n",
     "utf8"
   );
-  console.log("🚀 ~ newVersion:", newVersion);
-//   Commit version bump
-//   execSync(`git tag v${newVersion}`);
-//   execSync(`git push && git push --tags`);
+// Commit and push version bump
+execSync('git add package.json');
+execSync(`git commit -m "chore(release): v${newVersion}"`);
+execSync('git push');
 
-  // Publish to npm with tag
-//   execSync(`npm publish --tag ${tag}`, { stdio: "inherit" });
+// Generate release notes using conventional-changelog
+let changelog = '';
+try {
+  changelog = execSync(
+    `npx conventional-changelog -p angular --from ${currentVersion} --to HEAD`,
+    { encoding: 'utf-8' }
+  ).trim();
+} catch (err) {
+  console.error('❌ Error generating changelog:', err.message);
+  process.exit(1);
+}
 
-  console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
+// Format and create Git tag with changelog as annotation
+const tagMessage = `✨ Release v${newVersion}\n\n${changelog}`;
+const tagName = `v${newVersion}`;
+const tagCommand = `git tag -a ${tagName} -m ${JSON.stringify(tagMessage)}`;
 
-const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8' }).trim();
-
-const rawLog = execSync(
-  `git log ${lastTag}..HEAD --pretty=format:"%h %s"`,
-  { encoding: 'utf-8' }
-);
-
-const commits = rawLog
-  .split('\n')
-  .map(line => {
-    const [hash, ...messageParts] = line.trim().split(' ');
-    const message = messageParts.join(' ');
-    return { hash, message };
-  })
-  .filter(commit =>
-    /^(feat|fix|chore|refactor|docs|test|perf)(\(.+\))?:/.test(commit.message)
-  );
-
-console.log(`🔖 Commits since ${lastTag}:\n`);
-commits.forEach(commit => {
-  console.log(`- ${commit.hash} ${commit.message}`);
-});
+try {
+  execSync(tagCommand, { stdio: 'inherit' });
+  execSync(`git push origin ${tagName}`, { stdio: 'inherit' });
+  console.log(`✅ Created and pushed Git tag: ${tagName}`);
+} catch (err) {
+  console.error('❌ Failed to create tag:', err.message);
+  process.exit(1);
 }
