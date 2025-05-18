@@ -1,2 +1,2 @@
 # semantic-semver
-semver release
+semver release - fixed
