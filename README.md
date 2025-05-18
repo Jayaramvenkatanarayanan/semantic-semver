@@ -1,2 +1,2 @@
 # semantic-semver
-semantic-semver
+semantic-semver samples
