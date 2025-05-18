@@ -43,15 +43,13 @@ execSync("git push", { stdio: "inherit" });
 // 3. Async block to generate release notes and publish
 (async () => {
   const { generateNotes } = await import("@semantic-release/release-notes-generator");
-  const parserOpts = (await import("conventional-changelog-angular/lib/parser-opts.js")).default;
 
   const notes = await generateNotes(
     {
       preset: "angular",
-      parserOpts: await parserOpts(),
     },
     {
-      commits: [], // automatic detection
+      commits: [],
       logger: console,
       nextRelease: {
         version: newVersion,
@@ -67,11 +65,11 @@ execSync("git push", { stdio: "inherit" });
   const tagName = `v${newVersion}`;
   const safeMessage = notes.replace(/"/g, '\\"').trim();
 
-  // 4. Create Git tag
+  // Tag + push
   execSync(`git tag -a ${tagName} -m "${safeMessage}"`, { stdio: "inherit" });
   execSync(`git push origin ${tagName}`, { stdio: "inherit" });
 
-  // 5. Create GitHub release
+  // GitHub release
   try {
     execSync(`gh release create ${tagName} --title "${tagName}" --notes "${safeMessage}"`, {
       stdio: "inherit",
