@@ -45,11 +45,6 @@ console.log(` change version: ${currentVersion} → ${newVersion}`);
 packageJson.version = newVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n", "utf8");
 
-// Commit and push version
-execSync("git add package.json", { stdio: "inherit" });
-execSync(`git commit -m "chore(release): v${newVersion}"`, { stdio: "inherit" });
-execSync("git push", { stdio: "inherit" });
-
 // logs
 let changelog = "";
 const tagName = `v${newVersion}`;
