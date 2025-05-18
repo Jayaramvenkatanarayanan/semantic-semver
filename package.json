@@ -1,14 +1,19 @@
 {
   "name": "semantic-semver",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "semantic-semver samples",
   "main": "index.js",
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/github": "^11.0.2",
+    "@semantic-release/release-notes-generator": "^14.0.3",
     "commitizen": "^4.3.1",
     "cz-conventional-changelog": "^3.3.0",
     "husky": "^9.1.7",
+    "semantic-release": "^24.2.4",
     "semver": "^7.7.2"
   },
   "config": {
@@ -19,7 +24,7 @@
   "scripts": {
     "prepare": "husky",
     "cz": "git-cz",
-    "version": "node getVersion.js"
+    "get-version": "node getVersion.js stable"
   },
   "keywords": [],
   "author": "",
