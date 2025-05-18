@@ -1,2 +1,2 @@
 # semantic-semver
-semver using gh release
+semver release
