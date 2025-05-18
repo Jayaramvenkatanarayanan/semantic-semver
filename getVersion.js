@@ -34,7 +34,6 @@ if (releaseType === "beta") {
     );
   }
 }
-
 if (!newVersion) {
   console.error("❌ Invalid semver bump:", releaseType);
   process.exit(1);
@@ -67,26 +66,28 @@ try {
       `npx conventional-changelog -p angular -r 0`,
       { encoding: 'utf-8' }
     ).trim();
-}
+  }
 } catch (err) {
-    console.error('❌ Error generating changelog:', err.message);
-    process.exit(1);
+  console.error('❌ Error generating changelog:', err.message);
+  process.exit(1);
 }
-console.log("🚀 ~ changelog:", changelog)
+console.log("🚀 ~ changelog:", changelog);
+
 // Create Git tag with changelog
 const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
-console.log("🚀 ~ tagMessage:", JSON.stringify(tagMessage))
-execSync(`git tag -a ${tagName} -m ${JSON.stringify(tagMessage)}`, {
-  stdio: "inherit",
-});
-// execSync(`git push origin ${tagName}`, { stdio: "inherit" });
+console.log("🚀 ~ tagMessage:", tagMessage);
+
+// Create and push the Git tag
+execSync(`git tag -a ${tagName} -m "${tagMessage}"`, { stdio: "inherit" });
+execSync(`git push origin ${tagName}`, { stdio: "inherit" });
+
 console.log(`🏷️  Git tag ${tagName} created and pushed.`);
 
 // Create GitHub release
 try {
-    execSync(`gh release create ${tagName} --title "${tagName}" --notes "${tagMessage.replace(/"/g, '\\"')}"`, {
-  stdio: 'inherit',
-});
+  execSync(`gh release create ${tagName} --title "${tagName}" --notes "${tagMessage.replace(/"/g, '\\"')}"`, {
+    stdio: 'inherit',
+  });
   console.log(`🚀 GitHub release ${tagName} published.`);
 } catch (err) {
   console.error("❌ Failed to create GitHub release:", err.message);
