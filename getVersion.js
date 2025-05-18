@@ -2,6 +2,8 @@ const semver = require("semver");
 const path = require("path");
 const fs = require("fs");
 const { execSync } = require("child_process");
+const { generateNotes } = require('@semantic-release/release-notes-generator');
+const parserOpts = require('conventional-changelog-angular/lib/parserOpts');
 
 const pkgPath = path.join(__dirname, "package.json");
 const packageJson = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
@@ -35,60 +37,63 @@ if (releaseType === "beta") {
   }
 }
 if (!newVersion) {
-  console.error("❌ Invalid semver bump:", releaseType);
+  console.error('❌ Invalid semver bump:', releaseType);
   process.exit(1);
 }
 
 console.log(`📦 Bumped version: ${currentVersion} → ${newVersion}`);
 
-// Write new version to package.json
+// 1. Update package.json
 packageJson.version = newVersion;
-fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n", "utf8");
+fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + '\n');
 
-// Commit and push version bump
-execSync("git add package.json", { stdio: "inherit" });
-execSync(`git commit -m "chore(release): v${newVersion}"`, { stdio: "inherit" });
-execSync("git push", { stdio: "inherit" });
+// 2. Commit the version bump
+execSync('git add package.json', { stdio: 'inherit' });
+execSync(`git commit -m "chore(release): v${newVersion}"`, { stdio: 'inherit' });
+execSync('git push', { stdio: 'inherit' });
 
-// Generate release notes using conventional-changelog
-let changelog = "";
-const tagName = `v${newVersion}`;
+// 3. Generate release notes
+const generateReleaseNotes = async () => {
+  const notes = await generateNotes(
+    {
+      preset: 'angular',
+      parserOpts: await parserOpts(),
+    },
+    {
+      commits: [], // let the plugin pull commits automatically
+      logger: console,
+      nextRelease: {
+        version: newVersion,
+        gitTag: `v${newVersion}`,
+      },
+      lastRelease: {
+        version: currentVersion,
+        gitTag: `v${currentVersion}`,
+      },
+    }
+  );
 
-try {
-  changelog = execSync(
-    `npx conventional-changelog -p angular --tag-prefix "v" --from ${currentVersion}`,
-    { encoding: 'utf-8' }
-  ).trim();
+  return notes;
+};
 
-  if (!changelog) {
-    // fallback to full changelog
-    changelog = execSync(
-      `npx conventional-changelog -p angular -r 0`,
-      { encoding: 'utf-8' }
-    ).trim();
+generateReleaseNotes().then((notes) => {
+  const tagName = `v${newVersion}`;
+  const safeMessage = notes.replace(/"/g, '\\"').trim();
+
+  // 4. Tag and push the release
+  execSync(`git tag -a ${tagName} -m "${safeMessage}"`, { stdio: 'inherit' });
+  execSync(`git push origin ${tagName}`, { stdio: 'inherit' });
+
+  // 5. Create GitHub release
+  try {
+    execSync(`gh release create ${tagName} --title "${tagName}" --notes "${safeMessage}"`, {
+      stdio: 'inherit',
+    });
+    console.log(`🚀 GitHub release ${tagName} published.`);
+  } catch (err) {
+    console.error('❌ Failed to create GitHub release:', err.message);
   }
-} catch (err) {
-  console.error('❌ Error generating changelog:', err.message);
+}).catch((err) => {
+  console.error('❌ Failed to generate release notes:', err.message);
   process.exit(1);
-}
-console.log("🚀 ~ changelog:", changelog);
-
-// Create Git tag with changelog
-const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
-console.log("🚀 ~ tagMessage:", tagMessage);
-
-// Create and push the Git tag
-execSync(`git tag -a ${tagName} -m "${tagMessage}"`, { stdio: "inherit" });
-execSync(`git push origin ${tagName}`, { stdio: "inherit" });
-
-console.log(`🏷️  Git tag ${tagName} created and pushed.`);
-
-// Create GitHub release
-try {
-  execSync(`gh release create ${tagName} --title "${tagName}" --notes "${tagMessage.replace(/"/g, '\\"')}"`, {
-    stdio: 'inherit',
-  });
-  console.log(`🚀 GitHub release ${tagName} published.`);
-} catch (err) {
-  console.error("❌ Failed to create GitHub release:", err.message);
-}
+});
