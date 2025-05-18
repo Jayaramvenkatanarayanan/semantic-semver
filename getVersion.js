@@ -67,25 +67,35 @@ execSync('git push');
 // Generate release notes using conventional-changelog
 let changelog = '';
 try {
+    // After creating Git tag...
+execSync(`gh release create ${tagName} --title "v${newVersion}" --notes ${JSON.stringify(tagMessage)}`, {
+  stdio: 'inherit',
+});
   changelog = execSync(
     `npx conventional-changelog -p angular --from ${currentVersion} --to HEAD`,
     { encoding: 'utf-8' }
   ).trim();
+  console.log("🚀 ~ changelog:", changelog)
 } catch (err) {
   console.error('❌ Error generating changelog:', err.message);
   process.exit(1);
 }
 
-// Format and create Git tag with changelog as annotation
-const tagMessage = `✨ Release v${newVersion}\n\n${changelog}`;
-const tagName = `v${newVersion}`;
-const tagCommand = `git tag -a ${tagName} -m ${JSON.stringify(tagMessage)}`;
+  console.log("🚀 ~ changelog:", changelog)
 
+// 6. Create Git tag with changelog
+const tagName = `v${newVersion}`;
+const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
+execSync(`git tag -a ${tagName} -m ${JSON.stringify(tagMessage)}`, { stdio: 'inherit' });
+execSync(`git push origin ${tagName}`, { stdio: 'inherit' });
+console.log(`🏷️  Git tag ${tagName} created and pushed.`);
+
+// 7. Create GitHub release with changelog
 try {
-  execSync(tagCommand, { stdio: 'inherit' });
-  execSync(`git push origin ${tagName}`, { stdio: 'inherit' });
-  console.log(`✅ Created and pushed Git tag: ${tagName}`);
+  execSync(`gh release create ${tagName} --title "${tagName}" --notes ${JSON.stringify(tagMessage)}`, {
+    stdio: 'inherit',
+  });
+  console.log(`🚀 GitHub release ${tagName} published.`);
 } catch (err) {
-  console.error('❌ Failed to create tag:', err.message);
-  process.exit(1);
+  console.error('❌ Failed to create GitHub release:', err.message);
 }
