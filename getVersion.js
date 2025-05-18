@@ -66,6 +66,7 @@ execSync('git push');
 
 // Generate release notes using conventional-changelog
 let changelog = '';
+const tagName = `v${newVersion}`;
 try {
     // After creating Git tag...
 execSync(`gh release create ${tagName} --title "v${newVersion}" --notes ${JSON.stringify(tagMessage)}`, {
@@ -84,7 +85,6 @@ execSync(`gh release create ${tagName} --title "v${newVersion}" --notes ${JSON.s
   console.log("🚀 ~ changelog:", changelog)
 
 // 6. Create Git tag with changelog
-const tagName = `v${newVersion}`;
 const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
 execSync(`git tag -a ${tagName} -m ${JSON.stringify(tagMessage)}`, { stdio: 'inherit' });
 execSync(`git push origin ${tagName}`, { stdio: 'inherit' });
