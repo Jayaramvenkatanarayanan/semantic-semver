@@ -53,7 +53,7 @@ console.log(` change version: ${currentVersion} → ${newVersion}`);
 
 // re-write package.json
 packageJson.version = newVersion;
-fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n", "utf8");
+fs.writeFileSync(path.join(__dirname, "package.json"), JSON.stringify(packageJson, null, 2) + "\n", "utf8");
 
 // logs
 let changelog = "";
