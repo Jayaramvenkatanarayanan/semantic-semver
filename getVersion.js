@@ -56,11 +56,11 @@ const tag = process.argv[3] || 'latest'; // npm dist-tag
   );
   console.log("🚀 ~ newVersion:", newVersion);
 //   Commit version bump
-  execSync(`git tag v${newVersion}`);
-  execSync(`git push && git push --tags`);
+//   execSync(`git tag v${newVersion}`);
+//   execSync(`git push && git push --tags`);
 
   // Publish to npm with tag
-  execSync(`npm publish --tag ${tag}`, { stdio: "inherit" });
+//   execSync(`npm publish --tag ${tag}`, { stdio: "inherit" });
 
   console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
 
@@ -86,18 +86,4 @@ console.log(`🔖 Commits since ${lastTag}:\n`);
 commits.forEach(commit => {
   console.log(`- ${commit.hash} ${commit.message}`);
 });
-
-
-// try {
-//   execSync(
-//     `npx conventional-changelog -p angular --from ${packageJson.version} --to HEAD -o CHANGELOG.md`,
-//     { stdio: 'inherit' }
-//   );
-// } catch (error) {
-//   console.error('❌ Failed to generate changelog:', error.message);
-//   process.exit(1); // Exit the script with an error code
-// }
-
-// console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
-// execSync(`npm publish --tag ${tag}`, { stdio: 'inherit' });
 }
