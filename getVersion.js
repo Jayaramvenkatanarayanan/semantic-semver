@@ -45,9 +45,9 @@ if (releaseType === "beta") {
     );
   }
 }
-
 //re-write
 if (newVersion) {
+    const tag = process.argv[3] || 'latest'; // npm dist-tag
   packageJson.version = newVersion;
   fs.writeFileSync(
     path.join(__dirname, "package.json"),
