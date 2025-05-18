@@ -46,10 +46,10 @@ console.log(`📦 Bumped version: ${currentVersion} → ${newVersion}`);
 packageJson.version = newVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n", "utf8");
 
-// // Commit and push version bump
-// execSync("git add package.json", { stdio: "inherit" });
-// execSync(`git commit -m "chore(release): v${newVersion}"`, { stdio: "inherit" });
-// execSync("git push", { stdio: "inherit" });
+// Commit and push version bump
+execSync("git add package.json", { stdio: "inherit" });
+execSync(`git commit -m "chore(release): v${newVersion}"`, { stdio: "inherit" });
+execSync("git push", { stdio: "inherit" });
 
 // Generate release notes using conventional-changelog
 let changelog = "";
@@ -76,20 +76,18 @@ console.log("🚀 ~ changelog:", changelog)
 // Create Git tag with changelog
 const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
 console.log("🚀 ~ tagMessage:", JSON.stringify(tagMessage))
-console.log("🚀 ~ tagMessage:", tagMessage)
-// execSync(`git tag -a ${tagName} -m ${JSON.stringify(tagMessage)}`, {
-//   stdio: "inherit",
-// });
+execSync(`git tag -a ${tagName} -m ${JSON.stringify(tagMessage)}`, {
+  stdio: "inherit",
+});
 // execSync(`git push origin ${tagName}`, { stdio: "inherit" });
 console.log(`🏷️  Git tag ${tagName} created and pushed.`);
 
-// // Create GitHub release
-// try {
-//   execSync(
-//     `gh release create ${tagName} --title "${tagName}" --notes ${JSON.stringify(tagMessage)}`,
-//     { stdio: "inherit" }
-//   );
-//   console.log(`🚀 GitHub release ${tagName} published.`);
-// } catch (err) {
-//   console.error("❌ Failed to create GitHub release:", err.message);
-// }
+// Create GitHub release
+try {
+    execSync(`gh release create ${tagName} --title "${tagName}" --notes "${tagMessage.replace(/"/g, '\\"')}"`, {
+  stdio: 'inherit',
+});
+  console.log(`🚀 GitHub release ${tagName} published.`);
+} catch (err) {
+  console.error("❌ Failed to create GitHub release:", err.message);
+}
