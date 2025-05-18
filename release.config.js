@@ -6,8 +6,9 @@ module.exports = {
     // [
     //   '@semantic-release/exec',
     //   {
-    //     // Pass the next version to a custom script
-    //     publishCmd: 'node ./scripts/release.js ${nextRelease.version}'
+    //     publishCmd: 'bash -c "echo 🚀 Releasing version 11.11.11 && echo Environment: $SHELL && echo Next Release Version: 11.11.11"'
+    //     // OR if you're hardcoding 2.0.0 (not recommended):
+    //     // publishCmd: 'echo "Publishing version 2.0.0"'
     //   }
     // ],
     '@semantic-release/github'

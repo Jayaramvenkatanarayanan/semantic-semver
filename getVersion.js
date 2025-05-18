@@ -11,6 +11,7 @@ const releaseType = ["stable", "minor"].includes(
 )
   ? (process.argv[2] || "").trim().toLowerCase()
   : "beta";
+console.log("🚀 ~ releaseType:", releaseType);
 let newVersion;
 if (releaseType === "beta") {
   if (semver.prerelease(packageJson.version)) {
@@ -36,15 +37,22 @@ if (releaseType === "beta") {
       removePreVersion,
       releaseType === "stable" ? "major" : "minor"
     );
+  } else {
+    newVersion = semver.inc(
+      packageJson.version,
+      releaseType === "stable" ? "major" : "minor"
+    );
   }
 }
 
 //re-write
-packageJson.version = newVersion;
-fs.writeFileSync(
-  path.join(__dirname, "package.json"),
-  JSON.stringify(packageJson, null, 2) + "\n",
-  "utf8"
-);
-console.log("🚀 ~ newVersion:", newVersion);
-return newVersion;
+if (newVersion) {
+  packageJson.version = newVersion;
+  fs.writeFileSync(
+    path.join(__dirname, "package.json"),
+    JSON.stringify(packageJson, null, 2) + "\n",
+    "utf8"
+  );
+  console.log("🚀 ~ newVersion:", newVersion);
+  return newVersion;
+}
