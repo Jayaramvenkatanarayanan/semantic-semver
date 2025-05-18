@@ -14,68 +14,100 @@ console.log("🚀 ~ releaseType:", releaseType);
 let newVersion;
 
 if (releaseType === "beta") {
-  newVersion = semver.prerelease(currentVersion)
-    ? semver.inc(currentVersion, "prerelease", "beta")
-    : semver.inc(currentVersion, "preminor", "beta");
+  if (semver.prerelease(currentVersion)) {
+    newVersion = semver.inc(currentVersion, "prerelease", "beta");
+  } else {
+    newVersion = semver.inc(currentVersion, "preminor", "beta");
+  }
 } else {
-  const base = semver.prerelease(currentVersion)
-    ? `${semver.major(currentVersion)}.${semver.minor(currentVersion)}.${semver.patch(currentVersion)}`
-    : currentVersion;
-  newVersion = semver.inc(base, releaseType === "stable" ? "major" : "minor");
+  if (semver.prerelease(currentVersion)) {
+    const parsed = semver.parse(currentVersion);
+    const base = `${parsed.major}.${parsed.minor}.${parsed.patch}`;
+    newVersion = semver.inc(
+      base,
+      releaseType === "stable" ? "major" : "minor"
+    );
+  } else {
+    newVersion = semver.inc(
+      currentVersion,
+      releaseType === "stable" ? "major" : "minor"
+    );
+  }
 }
-
 if (!newVersion) {
-  console.error("❌ Invalid semver bump:", releaseType);
+  console.error("Invalid semver release type:", releaseType);
   process.exit(1);
 }
 
-console.log(`📦 Bumped version: ${currentVersion} → ${newVersion}`);
+console.log(` change version: ${currentVersion} → ${newVersion}`);
 
-// 1. Update package.json
+// Write new version to package.json
 packageJson.version = newVersion;
-fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n");
+fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n", "utf8");
 
-// 2. Commit the version bump
+// Commit and push version
 execSync("git add package.json", { stdio: "inherit" });
 execSync(`git commit -m "chore(release): v${newVersion}"`, { stdio: "inherit" });
 execSync("git push", { stdio: "inherit" });
 
-// 3. Async block to generate release notes and publish
-(async () => {
-  const { generateNotes } = await import("@semantic-release/release-notes-generator");
+// logs
+let changelog = "";
+const tagName = `v${newVersion}`;
 
-  const notes = await generateNotes(
-    {
-      preset: "angular",
-    },
-    {
-      commits: [],
-      logger: console,
-      nextRelease: {
-        version: newVersion,
-        gitTag: `v${newVersion}`,
-      },
-      lastRelease: {
-        version: currentVersion,
-        gitTag: `v${currentVersion}`,
-      },
-    }
-  );
+try {
+  changelog = execSync(
+    `npx conventional-changelog -p angular --tag-prefix "v" --from ${currentVersion}`,
+    { encoding: 'utf-8' }
+  ).trim();
 
-  const tagName = `v${newVersion}`;
-  const safeMessage = notes.replace(/"/g, '\\"').trim();
-
-  // Tag + push
-  execSync(`git tag -a ${tagName} -m "${safeMessage}"`, { stdio: "inherit" });
-  execSync(`git push origin ${tagName}`, { stdio: "inherit" });
-
-  // GitHub release
-  try {
-    execSync(`gh release create ${tagName} --title "${tagName}" --notes "${safeMessage}"`, {
-      stdio: "inherit",
-    });
-    console.log(`🚀 GitHub release ${tagName} published.`);
-  } catch (err) {
-    console.error("❌ Failed to create GitHub release:", err.message);
+  if (!changelog) {
+    changelog = execSync(
+      `npx conventional-changelog -p angular -r 0`,
+      { encoding: 'utf-8' }
+    ).trim();
   }
-})();
+} catch (err) {
+  console.error('❌ Error generating changelog:', err.message);
+  process.exit(1);
+}
+console.log("🚀 ~ changelog:", changelog);
+
+// Add author information to each changelog item
+try {
+  // Get commits along with author info
+  const commits = execSync(
+    `git log --format='%s - %an' --no-merges --since="${currentVersion}"`,
+    { encoding: 'utf-8' }
+  ).trim().split('\n');
+
+  // Prepare the changelog entries
+  let changelogWithAuthors = '';
+  commits.forEach((commit) => {
+    // Format: - Commit message - author (Author Name)
+    changelogWithAuthors += `- ${commit.trim()} \n`;
+  });
+
+  // Use the new formatted changelog with authors
+  changelog = changelogWithAuthors + changelog;
+} catch (err) {
+  console.error("❌ Error extracting commits with authors:", err.message);
+  process.exit(1);
+}
+
+
+// Push tag
+const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
+execSync(`git tag -a ${tagName} -m "${tagMessage}"`, { stdio: "inherit" });
+execSync(`git push origin ${tagName}`, { stdio: "inherit" });
+
+console.log(` tag ${tagName}.`);
+
+// release
+try {
+  execSync(`gh release create ${tagName} --title "${tagName}" --notes "${tagMessage.replace(/"/g, '\\"')}"`, {
+    stdio: 'inherit',
+  });
+  console.log(`release tag ${tagName} published.`);
+} catch (err) {
+  console.error("Failed  release:", err.message);
+}
