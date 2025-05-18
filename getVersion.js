@@ -48,63 +48,56 @@ if (releaseType === "beta") {
 //re-write
 if (newVersion) {
 const tag = process.argv[3] || 'latest'; // npm dist-tag
-//   packageJson.version = newVersion;
-//   fs.writeFileSync(
-//     path.join(__dirname, "package.json"),
-//     JSON.stringify(packageJson, null, 2) + "\n",
-//     "utf8"
-//   );
-//   console.log("🚀 ~ newVersion:", newVersion);
-  // Commit version bump
-//   execSync(`git add package.json`);
-//   execSync(`git commit -m "chore(release): v${newVersion}"`);
-//   execSync(`git tag v${newVersion}`);
-//   execSync(`git push && git push --tags`);
-
-//   // Publish to npm with tag
-//   execSync(`npm publish --tag ${tag}`, { stdio: "inherit" });
-
-//   console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
-
-// const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8' }).trim();
-
-// const rawLog = execSync(
-//   `git log ${lastTag}..HEAD --pretty=format:"%h %s"`,
-//   { encoding: 'utf-8' }
-// );
-
-// const commits = rawLog
-//   .split('\n')
-//   .map(line => {
-//     const [hash, ...messageParts] = line.trim().split(' ');
-//     const message = messageParts.join(' ');
-//     return { hash, message };
-//   })
-//   .filter(commit =>
-//     /^(feat|fix|chore|refactor|docs|test|perf)(\(.+\))?:/.test(commit.message)
-//   );
-
-// console.log(`🔖 Commits since ${lastTag}:\n`);
-// commits.forEach(commit => {
-//   console.log(`- ${commit.hash} ${commit.message}`);
-// });
-
-// Generate the changelog using conventional-changelog
-execSync(`git add package.json`);
-execSync(`git commit -m "chore(release): v${newVersion}"`);
-execSync(`git tag v${newVersion}`);
-execSync(`git push && git push --tags`);
-console.log('📑 Generating changelog...');
-try {
-  execSync(
-    `npx conventional-changelog -p angular --from ${packageJson.version} --to HEAD -o CHANGELOG.md`,
-    { stdio: 'inherit' }
+  packageJson.version = newVersion;
+  fs.writeFileSync(
+    path.join(__dirname, "package.json"),
+    JSON.stringify(packageJson, null, 2) + "\n",
+    "utf8"
   );
-} catch (error) {
-  console.error('❌ Failed to generate changelog:', error.message);
-  process.exit(1); // Exit the script with an error code
-}
+  console.log("🚀 ~ newVersion:", newVersion);
+//   Commit version bump
+  execSync(`git tag v${newVersion}`);
+  execSync(`git push && git push --tags`);
 
-console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
-execSync(`npm publish --tag ${tag}`, { stdio: 'inherit' });
+  // Publish to npm with tag
+  execSync(`npm publish --tag ${tag}`, { stdio: "inherit" });
+
+  console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
+
+const lastTag = execSync('git describe --tags --abbrev=0', { encoding: 'utf-8' }).trim();
+
+const rawLog = execSync(
+  `git log ${lastTag}..HEAD --pretty=format:"%h %s"`,
+  { encoding: 'utf-8' }
+);
+
+const commits = rawLog
+  .split('\n')
+  .map(line => {
+    const [hash, ...messageParts] = line.trim().split(' ');
+    const message = messageParts.join(' ');
+    return { hash, message };
+  })
+  .filter(commit =>
+    /^(feat|fix|chore|refactor|docs|test|perf)(\(.+\))?:/.test(commit.message)
+  );
+
+console.log(`🔖 Commits since ${lastTag}:\n`);
+commits.forEach(commit => {
+  console.log(`- ${commit.hash} ${commit.message}`);
+});
+
+
+// try {
+//   execSync(
+//     `npx conventional-changelog -p angular --from ${packageJson.version} --to HEAD -o CHANGELOG.md`,
+//     { stdio: 'inherit' }
+//   );
+// } catch (error) {
+//   console.error('❌ Failed to generate changelog:', error.message);
+//   process.exit(1); // Exit the script with an error code
+// }
+
+// console.log(`✅ Published v${newVersion} to npm with tag "${tag}"`);
+// execSync(`npm publish --tag ${tag}`, { stdio: 'inherit' });
 }

@@ -1,6 +1,6 @@
 {
   "name": "semantic-semver",
-  "version": "1.1.0-beta.0",
+  "version": "1.0.0",
   "description": "semantic-semver samples",
   "main": "index.js",
   "devDependencies": {
