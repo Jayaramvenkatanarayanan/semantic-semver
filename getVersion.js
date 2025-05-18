@@ -51,45 +51,45 @@ if (!newVersion) {
 
 console.log(` change version: ${currentVersion} → ${newVersion}`);
 
-// // Write new version to package.json
-// packageJson.version = newVersion;
-// fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n", "utf8");
+// re-write package.json
+packageJson.version = newVersion;
+fs.writeFileSync(pkgPath, JSON.stringify(packageJson, null, 2) + "\n", "utf8");
 
-// // logs
-// let changelog = "";
-// const tagName = `v${newVersion}`;
+// logs
+let changelog = "";
+const tagName = `v${newVersion}`;
 
-// try {
-//   changelog = execSync(
-//     `npx conventional-changelog -p angular --tag-prefix "v" --from ${currentVersion}`,
-//     { encoding: 'utf-8' }
-//   ).trim();
+try {
+  changelog = execSync(
+    `npx conventional-changelog -p angular --tag-prefix "v" --from ${currentVersion}`,
+    { encoding: 'utf-8' }
+  ).trim();
 
-//   if (!changelog) {
-//     changelog = execSync(
-//       `npx conventional-changelog -p angular -r 0`,
-//       { encoding: 'utf-8' }
-//     ).trim();
-//   }
-// } catch (err) {
-//   console.error('❌ Error generating changelog:', err.message);
-//   process.exit(1);
-// }
-// console.log("🚀 ~ changelog:", changelog);
+  if (!changelog) {
+    changelog = execSync(
+      `npx conventional-changelog -p angular -r 0`,
+      { encoding: 'utf-8' }
+    ).trim();
+  }
+} catch (err) {
+  console.error('❌ Error generating changelog:', err.message);
+  process.exit(1);
+}
+console.log("🚀 ~ changelog:", changelog);
 
-// // Push tag
-// const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
-// execSync(`git tag -a ${tagName} -m "${tagMessage}"`, { stdio: "inherit" });
-// execSync(`git push origin ${tagName}`, { stdio: "inherit" });
+// Push tag
+const tagMessage = `✨ Release ${tagName}\n\n${changelog}`;
+execSync(`git tag -a ${tagName} -m "${tagMessage}"`, { stdio: "inherit" });
+execSync(`git push origin ${tagName}`, { stdio: "inherit" });
 
-// console.log(` tag ${tagName}.`);
+console.log(` tag ${tagName}.`);
 
-// // release
-// try {
-//   execSync(`gh release create ${tagName} --title "${tagName}" --notes "${tagMessage.replace(/"/g, '\\"')}"`, {
-//     stdio: 'inherit',
-//   });
-//   console.log(`release tag ${tagName} published.`);
-// } catch (err) {
-//   console.error("Failed  release:", err.message);
-// }
+// release
+try {
+  execSync(`gh release create ${tagName} --title "${tagName}" --notes "${tagMessage.replace(/"/g, '\\"')}"`, {
+    stdio: 'inherit',
+  });
+  console.log(`release tag ${tagName} published.`);
+} catch (err) {
+  console.error("Failed  release:", err.message);
+}
